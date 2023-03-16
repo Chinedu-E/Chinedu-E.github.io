@@ -43,3 +43,13 @@ header{
     font-size: small;
     text-align: center;
 }
+
+#diagrams .image.detailed img{
+    width: 80%;
+    height: 100%;
+}
+
+#diagrams .image.high img{
+    width: 80%;
+    height: 100%;
+}

@@ -278,6 +278,7 @@ def tower_reward(self, params, past_params):
                     <img src="../images/pdqn.png" alt=""/>
                     <p>PDQN Algorithm</p>
                 </span>
+                 <br/>
                 <strong>Prioritized Experience Replay</strong>: DQN samples uniformly from the replay buffer. Ideally, we want to sample more frequently those transitions from which there is much to learn. As a proxy for learning potential, prioritized experience replay samples transitions with probability relative to the most recent encountered absolute TD error. Temporal Difference (T.D) can be calculated with this formula:
                 <span class="image fit td">
                     <img src="../images/td.png" alt="" />
@@ -288,15 +289,23 @@ def tower_reward(self, params, past_params):
             </p>
         </div>
 
-        <h2>Project Details</h2>
-        <ul>
-        <li><strong>Technologies used:</strong> List of technologies used in the project.</li>
-        <li><strong>Project duration:</strong> Length of time the project took to complete.</li>
-        <li><strong>Features:</strong> A list of the key features of your software development project.</li>
-        </ul>
-        <h2>Project Challenges</h2>
-        <p><strong>Challenge 1:</strong> Description of the first challenge encountered during the project.</p>
-        <p><strong>Challenge 2:</strong> Description of the second challenge encountered during the project.</p>
+        <div id="diagrams">
+            <h2>System Diagrams</h2>
+            <h3>Detailed Model System</h3>
+            <p>
+                <span class="image detailed">
+                    <img src="../images/clash_detailed_model.png" alt="" />
+                </span>
+            </p>
+            <h3>High level system overview</h3>
+            <p>
+                <span class="image high">
+                    <img src="../images/clashroyaleoverview.png" alt="" />
+                </span>
+            </p>
+        </div>
+
+
   </div>
   </body>
 </html>
