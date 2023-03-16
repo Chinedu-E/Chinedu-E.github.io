@@ -22,7 +22,23 @@ header{
     height: 400px;
 }
 
-#methods .image.fit p{
+#methods .image.fit.pdqn img{
+    height: 380px;
+    width: 80%;
+}
+
+#methods .image.fit.pdqn p{
+    font-weight: lighter;
+    font-size: small;
+    text-align: center;
+}
+
+#methods .image.fit.td img{
+    height: 100px;
+    width: 80%;
+}
+
+#methods .image.fit.td p{
     font-weight: lighter;
     font-size: small;
     text-align: center;

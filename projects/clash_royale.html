@@ -274,7 +274,16 @@ def tower_reward(self, params, past_params):
                 Firstly, Deep Q Network (DQN) is an algorithm developed by Deepmind that achieved superhuman level performance in atari games while only having access to just the screen pixels, just like humans. It uses a neural network to approximate the action-value function Q, the maximum expected return achievable from following any given policy, and uses the Bellman equation as an iterative update until it converges to the optimal state-value function. Each iteration is stored in a buffer called experience replay, it contains the state, action, reward, next state and a done flag (boolean indicating if the episode is over or not). Given the nature of the algorithm, it is only capable of handling discrete action spaces (e.g left, right, up down).<br/><br/>
                 The Double Deep Deterministic Gradient (DDPG) is an algorithm which concurrently learns a Q-function and a policy. This approach is closely connected to Q-learning, and is motivated the same way. It uses off-policy data and the Bellman equation to learn the Q-function, and uses the Q-function to learn the policy.<br/>
                 In the P-DQN algorithm, the ideas from DQN and DDPG are incorporated into one. There will be an "actor" network which determines our continuous action parameters then a "critic" network which outputs the expected returns from the given returns. The two networks both have target networks. <br/>
+                <span class="image fit pdqn">
+                    <img src="../images/pdqn.png" alt=""/>
+                    <p>PDQN Algorithm</p>
+                </span>
                 <strong>Prioritized Experience Replay</strong>: DQN samples uniformly from the replay buffer. Ideally, we want to sample more frequently those transitions from which there is much to learn. As a proxy for learning potential, prioritized experience replay samples transitions with probability relative to the most recent encountered absolute TD error. Temporal Difference (T.D) can be calculated with this formula:
+                <span class="image fit td">
+                    <img src="../images/td.png" alt="" />
+                    <p>TD error</p>
+                </span>
+                where r, s and s' are the reward, state and next state respectively with gamma being the discount rate.<br/>
                 <strong>Epsilon Greedy Algorithm</strong>: This is an algorithm used to solve the exploration vs exploitation problem. This problem occurs when the agent always pick the "optimal" action according to the state-value estimate but this action may not be the most optimal action in the long run. To solve this, we choose a value and uniformly sample, if the sampled value is less than our chosen value we take a random action otherwise we exploit our "best" known action. In this project the epsilon greedy algorithm will be used to either place a card on the board or we save our elixir. This is because not all actions are available at any given state, so to explore in this case, we want the agent to wait for more actions to become available. Due to the inner workings of the DDPG algorithm an Ornstein-Uhlenbeck noise has already been applied to the continuous action space (where the agent places the card).
             </p>
         </div>
@@ -288,9 +297,6 @@ def tower_reward(self, params, past_params):
         <h2>Project Challenges</h2>
         <p><strong>Challenge 1:</strong> Description of the first challenge encountered during the project.</p>
         <p><strong>Challenge 2:</strong> Description of the second challenge encountered during the project.</p>
-        <h2>Project Results</h2>
-        <p><strong>Outcome:</strong> A summary of the final outcome of the project.</p>
-        <p><strong>Impact:</strong> How your project impacted your intended users and stakeholders.</p>
   </div>
   </body>
 </html>
