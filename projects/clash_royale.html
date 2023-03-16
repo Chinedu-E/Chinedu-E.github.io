@@ -12,6 +12,9 @@
         <header>
             <h1>Clash Royale AI</h1>
             <p>Reinforcement learning system that learned to play the game Clash Royale using screen pixels and engineered features.</p>
+            <ul class="icons">
+                <li><a href="https://github.com/Chinedu-E/ClashRoyale-AI" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+            </ul>
         </header>
        
         <div id="introduction">
@@ -305,7 +308,70 @@ def tower_reward(self, params, past_params):
             </p>
         </div>
 
+        <div id="train">
+            <h2>Training</h2>
+            <p>
+                Using the P-DQN algorithm and the figures above as references, our training cycle looks like this:
+                <ul>
+                    <li>Collect the current state from the environment.</li>
+                    <li>Extract features from the state using feature engineering.</li>
+                    <li>Extract another set of features from the pre-trained VAE.</li>
+                    <li>Concatenate both features and pass it to the parameter model which outputs continuous values for each valid discrete action. Using the concatenated features and continuous values, pass the concatenation of both to the DQN model which outputs "how good" each continuous value is with respect to its discrete value</li>
+                    <li>Use the action on the environment and observe three values; the reward of that action, the next state after that action and a terminal flag indicating if that action led to the end of the game/session/episode.</li>
+                    <li>Calculate the absolute T.D error and update the buffer with the state, action, reward, next state, terminal flag and T.D error.</li>
+                    <li>Every n episodes, we define our target values (from the target networks) using the Bellman equation, perform stochastic gradient decent and the perform a soft update of the networks weights. For this use case, n refers to the number of episodes as opposed to steps, It takes on a value of 1 and gradually increases as our agent improves. Simply put, we train more frequently at the start and gradually decrease as time goes on.</li>
+                </ul>
 
+                Due to amount of computational power and time needed to execute this task from running a gpu intensive emulator to the large RAM needed for our replay buffer, the whole system was trained on the cloud. Specifically, I made use of Google Compute Engine to set up an Ubuntu virtual machine to handle the training.<br/><br/>
+                The agent was left to train for - days until it was finally stopped after little/no increase to our average rewards with time.
+            </p>
+        </div>
+
+        <div id="eval">
+            <h2>Evaluation</h2>
+            <p>
+                The agent was evaluated against 4 other agents:
+                <ul>
+                    <li>Randomized agent: carries out random action.</li>
+                    <li>Game Trainer agent: An agent provided by the game with intent to train new players.</li>
+                    <li>Human agent (me)</li>
+                    <li>Human agent (random online opponent)</li>
+                </ul>
+            </p>
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Opponent</th>
+                            <th>Win rate</th>
+                            <th>Avg. game time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Random Agent</td>
+                            <td>100%</td>
+                            <td>72 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Game Trainer</td>
+                            <td>80%.</td>
+                            <td>135 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Online Player</td>
+                            <td>60%</td>
+                            <td>80 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Against me</td>
+                            <td>0%</td>
+                            <td>48 seconds</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
   </div>
   </body>
 </html>
