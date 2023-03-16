@@ -1,0 +1,29 @@
+header{
+    text-align: center;
+}
+
+
+
+#introduction .image.left img{
+    height: 450px;
+}
+
+#introduction .image.fit img{
+    height: 350px;
+}
+
+#introduction .image.fit p{
+    font-weight: lighter;
+    font-size: small;
+    text-align: center;
+}
+
+#methods .image.fit img{
+    height: 400px;
+}
+
+#methods .image.fit p{
+    font-weight: lighter;
+    font-size: small;
+    text-align: center;
+}
