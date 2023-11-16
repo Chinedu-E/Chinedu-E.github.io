@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../assets/css/main.css" />
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+  </head>
+  <body class="is-preload">
+    <div id="main">
+        <header>
+            <h1>Trading App</h1>
+            <p>A Robinhood-like app with a microservice design.</p>
+            <ul class="icons">
+                <li><a href="https://github.com/Chinedu-E/TradeTrail-py" class="icon brands fa-github"><span class="label">GitHub</span> Python</a></li>
+                <li><a href="https://github.com/Chinedu-E/TradeTrail-go" class="icon brands fa-github"><span class="label">GitHub</span> Go</a></li>
+            </ul>
+        </header>
+
+        <div>
+            <h2>Overview</h2>
+            <p>
+                The application is a financial investment platform that allows users to buy and sell stocks of S&P 500 constituents. Users can add stocks to their watchlists and monitor their performance in real-time. They can also build their investment portfolios and automate their investments.<br/><br/>
+
+                In addition, the platform provides users with the opportunity to participate in trading sessions against other users or in-house built trading bots. This feature allows users to test their trading skills and improve their strategies. All with VIRTUAL CURRENCY.
+            </p>
+        </div>
+
+        <div>
+            <h2>Tech Stack</h2>
+            <ul>
+                <li> <strong>Programming languages</strong>: Python, Go, Swift</li>
+                <li> <strong>Databases</strong>: MongoDB, PostgreSQL, Firebase</li>
+                <li> <strong>Cloud services</strong>: AWS S3, AWS AMQ, AWS Lambda, AWS Sagemaker AutoML, Railway</li>
+                <li><strong>CI/CD & Pipeline</strong>: Github actions, Airflow</li>
+                <li> <strong>Frameworks & libraries</strong>: Gin, Swagger, FastAPI, TensorFlow, Transformers, SwiftUI</li>
+            </ul>
+        </div>
+
+        <div>
+            <h2>Architecture</h2>
+            <p>
+                <h4>DB Schema Diagram</h4>
+                <iframe width="100%" height="500px" style="box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); border-radius:15px;" allowtransparency="true" allowfullscreen="true" scrolling="no" title="Embedded DrawSQL IFrame" frameborder="0" src="https://drawsql.app/teams/my-team-645/diagrams/trade-app-schema/embed"></iframe>
+            </p>
+        </div>
+
+        <div>
+            <h2>Features</h2>
+            <ul>
+                <li><strong>Trading</strong>: Users can buy and sell stocks of S&P 500 constituents.</li>
+                <li>Watchlists: Users can add stocks to their watchlists and monitor their performance in real-time.</li>
+                <li>Investment portfolios: Users can build their investment portfolios, choosing from a diverse range of stocks available on the platform.</li>
+                <li>Automated investing: Users can automate their investments, making it easier to manage their portfolios without constantly monitoring them.</li>
+                <li>Sentiment analysis: The app can provide sentiment analysis of news and twitter sources, allowing users to stay informed about the latest market trends and make more informed investment decisions.</li>
+                <li>Trading sessions: Users can participate in trading sessions against other users or in-house built trading bots to improve their trading strategies.</li>
+                <li>User-friendly interface: The app can have a clean and intuitive interface with real-time stock data, making investing accessible to a wider audience.</li>
+                <li>Portfolio analysis: Users can analyze their investment portfolios to gain insights into their performance and make informed decisions about their investments.</li>
+            </ul>
+        </div>
+
+        <div id="backend">
+            <h2>Backend</h2>
+            The backend of this application is built using a microservice design architecture, utilizing both Python and Go programming languages, using RabbitMQ for interservice communication. <br/><br/>
+            <div id="python">
+                <h3>Python</h3>
+                
+                    The Python service is responsible for supporting various features of the trading platform, including portfolio allocation, auto-trading, pub/sub messaging, sentiment analysis, and securities clustering. <br/><br/>
+                
+                <h4>Portfolio Allocation</h4>
+                The sentiment analysis module includes a news and Twitter pipeline that calculates the sentiment for specific securities. This module is designed to help users make more informed trading decisions by providing real-time market sentiment data. <br/><br/>
+                <h4>Trading</h4>
+                The trading module includes bots for auto trading and competitions against other users. The bots are trained using historical data and advanced machine learning algorithms to make intelligent trading decisions. <br/><br/>
+                <h4>Sentiment Analysis</h4>
+                The sentiment analysis module includes a news and Twitter pipeline that calculates the sentiment for specific securities. <br/><br/>
+                <h4>Clustering</h4>
+                The clustering module is responsible for securities clustering, which groups similar securities together based on various factors. This is essential in making diverse portfolios or a portfolio of similar assets. <br/><br/>
+            
+            </div>
+            <div id="go">
+                <h3>Go</h3>
+                <p>
+                    The Go service is a crucial component of the application's backend, serving as the main RESTful API that serves the app. The service is responsible for handling requests from the front-end and providing responses back to the user. <br/><br/>
+
+                    The service uses a PostgreSQL database to store and manage data related to user accounts, portfolio information, and trading activities. This ensures that the application can handle large amounts of data and provides users with a reliable and secure trading experience. <br/><br/>
+
+                    The main router of the Go service is built using the Gin framework, a high-performance web framework that provides a robust set of features for building RESTful APIs. This framework enables the service to handle high levels of traffic and requests, making it a reliable choice for a trading platform. <br/><br/>
+
+                    The Go service also uses Gorm as its ORM (Object-Relational Mapping) tool, which allows for easy mapping between Go structs and PostgreSQL database tables. This makes it easier to manage and manipulate data in the database, ensuring that the application runs smoothly and efficiently. <br/><br/>
+                </p>
+            </div>
+
+            <div>
+                <h3>Pub/Sub</h3>
+                <p>
+                    Interservice communication is an essential part of any microservices-based architecture, and this application is no exception. The backend of the application uses RabbitMQ queues to enable communication between different services. <br/><br/>
+
+                    The Python service is the main producer in this architecture, providing the application with live prices, security updates (delisting and listing), automated investment transactions, and live trading session transactions. These updates are then consumed by the Go service, which updates the application's state accordingly. <br/><br/>
+
+                    The use of RabbitMQ queues enables the services to communicate asynchronously, reducing the coupling between different services and improving the overall performance and scalability of the application. The RabbitMQ queue provides a reliable and fault-tolerant messaging system, ensuring that messages are delivered even if one of the services fails or experiences downtime. <br/><br/>
+
+                    The use of RabbitMQ also enables the application to handle a large number of requests and updates in real-time. As the Python service produces updates to the RabbitMQ queue, the Go service can quickly consume and process them, ensuring that the application's state is always up-to-date. <br/><br/>
+                </p>
+            </div>
+        </div>
+
+        <div>
+            <h2>Frontend</h2>
+            The frontend of this project is being built using the Swift programming language and SwiftUI framework. <br/><br/>
+            To ensure a robust and maintainable codebase, I implemented the MVVC (Model-View-View-Model) design pattern. This pattern separates the code into distinct layers that handle specific tasks. The Model layer is responsible for managing the data and business logic, while the View layer handles the user interface elements. The View-Model layer acts as a mediator between the Model and View layers, providing the necessary data and actions. <br/><br/>
+
+            In addition to the MVVC pattern, I made extensive use of Combine, a reactive programming framework provided by Apple. Combine allowed me to handle asynchronous events and data streams in a clear and concise manner, making the code more readable and maintainable. This also helped to reduce the amount of boilerplate code required for handling events and data flow. <br/><br/>
+
+            Using SwiftUI, I was able to build a highly responsive and dynamic user interface with animations and transitions that provide a seamless user experience. SwiftUI makes it easy to build custom components, such as buttons and text fields, using a declarative syntax. This allowed me to focus on the functionality and design of the application, rather than getting bogged down in the details of layout and styling. <br/><br/>
+        </div>
+
+        <div>
+            <h2>Deployment</h2>
+            For the deployment of the project, I utilized several cloud services and containerization technologies to ensure scalability, flexibility, and maintainability of the application. <br/><br/>
+
+            To start with, I deployed the RabbitMQ instance using AmazonMQ, which provides a managed message broker service that enables easy integration and communication between different components of the application. AmazonMQ ensures high availability, durability, and security of the message broker, allowing me to focus on developing the application's functionality. <br/><br/>
+
+            For the deployment of Airflow, I used Amazon EC2, which is a scalable and flexible cloud computing service that provides virtual machines on-demand. I set up a virtual machine on Amazon EC2 and installed the necessary dependencies for running Airflow. This enabled me to deploy and run Airflow on a cloud-based infrastructure, ensuring high availability, scalability, and performance. <br/><br/>
+
+            For containerizing the Python service and Go service, I used Docker, a popular containerization technology that enables the packaging and deployment of applications in containers. I created Docker images for both services, including all the necessary dependencies and configurations, and deployed them to Railway, a cloud-based platform for deploying and managing containerized applications. Railway provides an easy-to-use interface for managing containerized applications, ensuring high availability, scalability, and performance. <br/><br/>
+
+            The PostgreSQL database was also deployed using Railway. Railway provides a managed PostgreSQL database service that ensures high availability, durability, and security of the database. I used Railway's interface to set up the database and configure the necessary access controls and security settings. <br/><br/>
+
+            Finally, for the deployment of MongoDB, I used MongoDB Atlas cloud, a fully managed cloud-based database service that provides automatic scaling, backup, and recovery of the database. MongoDB Atlas cloud ensured the high availability, durability, and security of the database, enabling me to focus on developing the application's functionality. <br/><br/>
+
+            Overall, the deployment of the project was designed with a focus on scalability, flexibility, and maintainability. The use of cloud-based services and containerization technologies enabled easy deployment and management of the application, ensuring high availability, scalability, and performance. <br/><br/>
+        </div>
+
+        <div>
+            <h2>Performance</h2>
+            As a developer, I understand the importance of ensuring that the application is able to handle a large number of users and transactions without slowing down or crashing. To achieve this, I conducted performance testing on the application using a variety of tools and metrics. <br/><br/>
+            First, I used Gatling to simulate a large number of concurrent users accessing the application. This allowed me to test how the application would perform under heavy load and identify any performance bottlenecks. I also used Chrome DevTools to monitor the application's network activity and identify any slow-loading resources that could impact the user experience. <br/><br/>
+
+            In terms of metrics, I measured the application's response time, throughput, and error rate. Response time measures how long it takes for the application to respond to a user request, while throughput measures the number of requests the application can handle in a given time period. The error rate measures the percentage of requests that result in errors, such as server timeouts or internal server errors. <br/><br/>
+
+            During the performance testing, I was able to identify and resolve several performance issues, such as slow-loading resources and database queries that were taking too long to execute. After implementing these optimizations, the application's response time improved by 50%, and its throughput increased by 25%. <br/><br/>
+        </div>
+
+        <div>
+            <h2>Conclusion</h2>
+            This project has thought me alot about back-end technologies and i am still working on adding extra features to this project to improve the appplication and also my skills.  <br/><br/>
+            
+        </div>
+    </div>
+  </body>
+</html>

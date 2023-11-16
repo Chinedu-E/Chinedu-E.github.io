@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../assets/css/main.css" />
+	<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+  </head>
+  <body class="is-preload">
+    <div id="main">
+        <header>
+            <h1>Soccer App</h1>
+            <p>The soccer app provides users with real-time data on fixtures, scores, standings, and predictions using machine learning. Built on a modern tech stack.</p>
+            <ul class="icons">
+                <li><a href="https://github.com/Chinedu-E/prem-app" class="icon brands fa-github"><span class="label">GitHub</span>Github</a></li>
+            </ul>
+        </header>
+
+        <div>
+            <h2>Overview</h2>
+            <p>
+                The soccer app is designed to keep soccer enthusiasts up to date on the latest match information and provide valuable insights into match outcomes using advanced machine learning techniques. By leveraging a robust backend powered by FastAPI, MongoDB, and Firebase, along with sophisticated machine learning models, the app delivers accurate and timely data on fixtures, scores, standings, and predictions. Containerized using Docker and deployed via Railway, the app is built to scale, ensuring high performance and reliability for users.
+            </p>
+        </div>
+
+        <div>
+            <h2>Tech Stack</h2>
+            <ul>
+                <li> <strong>Programming languages</strong>: Python, TypeScript</li>
+                <li> <strong>Databases</strong>: MongoDB, Firebase</li>
+                <li> <strong>Cloud services</strong>: AWS S3, AWS Sagemaker AutoML, EC2, Redis, Railway</li>
+                <li><strong>Pipeline</strong>: Airflow, Github Actions</li>
+                <li> <strong>Frameworks & libraries</strong>: FastAPI, React, Numpy, Pandas, TensorFlow, Selenium, BeautifulSoup</li>
+            </ul>
+        </div>
+
+        <div>
+            <h2>Features</h2>
+            <ul>
+                <li> <strong>News</strong> </li>
+                <li> <strong>Standings</strong> </li>
+                <li> <strong>Fixtures</strong> </li>
+                <li> <strong>Past Scores</strong> </li>
+                <li> <strong>Historical Stats</strong> </li>
+                <li> <strong>Stats Predictions</strong> </li>
+            </ul>
+        </div>
+
+        <div>
+            <h2>Backend</h2>
+            <p>
+                The backend has been built using Python and FastAPI, with MongoDB as the primary database and Firebase for storing team logos. AWS S3 serves as the feature store for our machine learning models. This section will discuss the backend architecture, data sources, RESTful APIs, and machine learning integration. <br/>
+            </p>
+            <h3>Architecture</h3>
+            <p>
+                The backend is designed using a modular and scalable architecture that follows the best practices in software development. The application logic is divided into several components and services that interact with each other. Key components of the backend architecture include: 
+            </p>
+            <ol>
+                <li><strong>API Layer</strong>: The API layer is built using FastAPI, a modern, fast, web framework for building APIs with Python. FastAPI takes advantage of Python's type hints, making it easy to define and validate request and response models. It also provides excellent performance, automatic generation of API documentation, and dependency injection for managing resources.</li>
+                <li><strong>Data Layer</strong>: The data access layer is responsible for interacting with the databases (MongoDB and Firebase) and providing a seamless interface for the API layer to fetch and store data. It employs the use of Object-Relational Mapping (ORM) to abstract the database operations, making it easier to switch databases or modify schemas in the future.</li>
+                <li><strong>Pipeline Layer</strong>: The pipeline layer is there to ensure data for the fixtures, scores, features used for predictions, and standings are updated regularly. This was done with the use of Airflow</li>
+            </ol>
+            <h3>Data Sources</h3>
+            <p>The app relies on various data sources to provide accurate and up-to-date soccer information. Data sources include:</p>
+            <ol>
+                <li><strong>External APIs</strong>: Third-party APIs such as newsapi are used to fetch real-time data for news. This ensures that the app always has the most recent and accurate information available.</li>
+                <li><strong>Web Scraping</strong>: Using libraries in the python ecosystem, Selenium, requests & Beautiful soup, player data along with match stats were scraped from various sources.</li>
+                <li><strong>Manual Data Entry</strong>: Some data, such as team logos, is programmatically curated and stored in Firebase but checked manually. This allows for better control over the quality of the data presented in the app.</li>
+            </ol>
+            <h3>RESTful APIs</h3>
+            <p>
+                The backend provides RESTful APIs for the frontend to consume. These APIs enable the frontend to retrieve and display the soccer information in the app. Some of the key API endpoints include:
+            </p>
+            <ul>
+                <li><strong>Fixtures</strong>: Returns a list of upcoming fixtures, including date, time, and participating teams.</li>
+                <li><strong>Scores</strong>: Provides the scores for completed matches.</li>
+                <li><strong>Standings</strong>:  Returns the standings for different leagues and competitions of a given season/year.</li>
+                <li><strong>Predictions</strong>: Provides match-based stats predictions based on machine learning models</li>
+                <li><strong>Team Logos</strong>:  Retrieves team logos urls stored in Firebase for display in the app</li>
+            </ul>
+            <h3>Machine Learning Integration</h3>
+            <p>
+                The machine learning component of the application plays a crucial role in predicting match outcomes. Two main modeling methods were used: Amazon Web Services (AWS) AutoML with SageMaker Studio and a custom-built TensorFlow model. This section will discuss the approaches, model training, monitoring, and deployment strategies.
+            </p>
+            <h4>AWS AutoML with SageMaker Studio</h4>
+            <p>
+                AWS AutoML in SageMaker Studio was utilized to automate the process of training, tuning, and deploying machine learning models. It enabled the exploration of multiple algorithms and configurations, eventually selecting the best model based on evaluation metrics. <br/>
+                A job was set up to automatically trigger the AutoML process whenever the features were updated. This ensured that the model remained up-to-date and accurate in its predictions. The selected model was then deployed to an endpoint, making it accessible for the application to consume for predictions.
+            </p>
+            <h5>Model Training</h5>
+            <p>
+                The AutoML process began with preprocessing the raw data, extracting relevant features, and splitting the data into training and validation sets. It then performed a series of steps, including:
+            </p>
+            <ol>
+                <li><strong>Algorithm selection</strong>: AutoML explored various algorithms suitable for the prediction task, such as linear regression, decision trees, and neural networks.</li>
+                <li><strong>Hyperparameter optimization</strong>: AutoML optimized the chosen algorithms' hyperparameters to achieve the best possible performance.</li>
+                <li><strong>Model evaluation</strong>: Models were evaluated using cross-validation techniques and performance metrics like accuracy, precision, recall, and F1 score.</li>
+                <li><strong>Model selection</strong>: The best-performing model was selected based on the evaluation metrics.</li>
+            </ol>
+            <h5>Deployment</h5>
+            <p>
+                The selected model was deployed to a SageMaker endpoint, which provided a RESTful API for the application to consume. This allowed the backend to retrieve match outcome predictions using the deployed model.
+            </p>
+            <h4>Custom TensorFlow Model</h4>
+            <p>
+                A custom-built TensorFlow model was developed to complement the AutoML approach. This multimodal model consisted of a convolutional layer for processing player-level statistics (e.g., individual goals per game) and a multilayer perceptron (MLP) for processing team-level statistics (e.g., head-to-head history).
+            </p>
+            <h5>Model Training</h5>
+            <p>
+                The model was trained on historical match data using the following steps:
+                <ol>
+                    <li><b>Data preprocessing</b>: Raw data was preprocessed, and relevant features were extracted for both player- and team-level statistics.</li>
+                    <li><strong>Feature engineering</strong>: Additional features were engineered to capture complex relationships within the data.</li>
+                    <li><strong>Model architecture</strong>: The model was designed using a combination of convolutional and MLP layers to process different types of input data effectively.</li>
+                    <li><strong>Training and validation</strong>: The model was trained and validated using techniques such as early stopping and k-fold cross-validation to prevent overfitting and ensure generalization.</li>
+                </ol>
+            </p>
+            <h5>Monitoring and Retraining</h5>
+            <p>
+                The performance of the custom TensorFlow model was monitored continuously using evaluation metrics like accuracy, precision, recall, and F1 score. To keep the model updated and accurate, a GitHub Actions workflow was set up to retrain the model every two weeks automatically. This workflow included steps for data preprocessing, model training, validation, and versioning.
+            </p>
+            <h5>Deployment</h5>
+            <p>
+                This model was shadow tested and successfully used offline for batch predictions. So this model was not deployed however stored in S3 bucket for versioning.
+            </p>
+
+        </div>
+        
+        <div>
+            <h2>Deployment</h2>
+            <p>
+                The deployment of the soccer information app is designed to ensure optimal performance, scalability, and maintainability. The application components, including the Airflow server, MongoDB, Redis, and the main app, are deployed using various cloud services and containerization. This section will discuss the deployment strategies for each component and the benefits of this approach.
+            </p>
+            <h3>Airflow server</h3>
+            <p>
+                The Airflow server, responsible for managing data pipelines and periodic tasks, was deployed on an Amazon EC2 t2.micro instance. This choice provides a cost-effective and scalable solution for running the Airflow server, with the flexibility to upgrade or downgrade resources as needed. <br/><br/>
+
+                Benefits of deploying the Airflow server on EC2:
+                <ul>
+                    <li>Scalability: The EC2 instance can be easily scaled to accommodate varying workloads.</li>
+                    <li>Flexibility: EC2 instances can be customized to suit the specific requirements of the Airflow server in terms of security etc.</li>
+                    <li>Cost-effectiveness: The t2.micro instance offers a cost-efficient option for running the Airflow server, particularly during development and testing phases.</li>
+                </ul>
+            </p>
+            <h3>MongoDB</h3>
+            <p>
+                MongoDB, the primary database for the application, was deployed using MongoDB Atlas, a fully managed, global cloud database service. By using Atlas, the app benefits from features like automated backups, scaling, and monitoring, allowing the team to focus on application development. <br/><br/>
+
+                Benefits of deploying MongoDB on Atlas:
+                <ul>
+                    <li>Managed service: Atlas handles database operations, backups, and scaling, reducing operational overhead.</li>
+                    <li>Global availability: Atlas provides a distributed database with global availability, ensuring low latency and high availability.</li>
+                    <li>Security: Atlas offers built-in security features like encryption, access control, and network isolation.</li>
+                </ul>
+            </p>
+            <h3>Redis</h3>
+            <p>
+                Redis, used for caching and managing app sessions, was deployed using Redis Cloud, a fully managed Redis service. Redis Cloud provides a scalable, reliable, and secure Redis experience with features like auto-failover, data persistence, and backups. <br/><br/>
+
+                Benefits of deploying Redis on Redis Cloud:
+                <ul>
+                    <li>Managed service: Redis Cloud handles infrastructure management, scaling, and backups, simplifying operations.</li>
+                    <li>High availability: Redis Cloud provides auto-failover and data persistence, ensuring high availability and data durability.</li>
+                    <li>Performance: Redis Cloud offers low-latency access to Redis, improving the application's performance.</li>
+                </ul>
+            </p>
+            <h3>Main Application</h3>
+            <p>
+                The main app, consisting of the backend and frontend, was containerized using Docker and deployed via Railway. Containerization ensures a consistent environment across development, testing, and production, simplifying deployment and reducing potential issues. <br /><br/>
+                Railway, a platform for deploying, scaling, and managing containerized applications, was used to deploy the main app. Railway offers features like zero-downtime deployments, automated SSL, and easy scaling. <br/><br/>
+
+                Benefits of deploying the main app via Railway:
+                <ul>
+                    <li>Simplified deployment: Railway streamlines the deployment process, reducing manual steps and errors.</li>
+                    <li>Zero-downtime deployments: Railway ensures that the app remains available during deployments, avoiding disruption to users.</li>
+                    <li>Continuous Deployment: With the help of Github, code pushes are deployed instantly allowing focus on development.</li>
+                    <li>Automated SSL: Railway automatically provisions SSL certificates, improving security and user trust.</li>
+                </ul>
+            </p>
+        </div>
+        <div>
+            <h2>Conclusion</h2>
+            <p>
+                In summary, the soccer app serves as a valuable resource for soccer fans, offering a comprehensive view of the latest match information and predictions. By combining a powerful tech stack with innovative machine learning models, the app is positioned to evolve and adapt to the ever-changing world of soccer. Through continuous monitoring, updating, and refining the app's components, the soccer app remains a cutting-edge solution for delivering a seamless and engaging experience for soccer enthusiasts worldwide.
+            </p>
+        </div>
+    </div>
+  </body>
+</html>

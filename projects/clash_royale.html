@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Clash Royale AI</title>
+    <link rel="stylesheet" href="../assets/css/clash.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+  </head>
+  <body class="is-preload">
+    <div id="main">
+        <header>
+            <h1>Clash Royale AI</h1>
+            <p>Reinforcement learning system that learned to play the game Clash Royale using screen pixels and engineered features.</p>
+            <ul class="icons">
+                <li><a href="https://github.com/Chinedu-E/ClashRoyale-AI" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+            </ul>
+        </header>
+       
+        <div id="introduction">
+          <h2>Introduction</h2>
+          <p>Clash Royale is a free-to-play real-time strategy video game developed and published by Supercell. The game combines elements of collectible card games, tower defence, and a multiplayer online arena.</p>
+          <p>
+            <span class="image left">
+                <img src="../images/clashroyale.PNG" alt="" />
+            </span>
+            The objective of the game is to destroy the most opposing towers, with the destruction of the "King's Tower" being an instantaneous win. After three minutes, if both of the players/teams have an equal number of crowns or none at all the match continues into a 2-minute overtime period and the player who destroys an opposing tower wins instantaneously. If no towers are destroyed during overtime, there is a tiebreaker, where all towers rapidly lose health, and the tower with the least health is destroyed. If two towers have the same health, there is a draw.
+            <h3>Reinforcement Learning</h3>
+            Similar to its definition in cognitive science, reinforcement learning is a branch of machine learning where the agent learns to complete a given task through trial and error. The learning happens solely based on the reward signal (or punishment) where the agent learns to maximize its future rewards. <br/>
+            The agent takes an action in the simulated environment based on its current view of the environment (state) and it then recieves a reward (positive or negative). This cycle is repeated until convergence. <br/>
+            Reinforcement learning problems are usually formulated as a Markov Decision Process. In mathematics, a Markov decision process is a discrete-time stochastic control process. It provides a framework for modeling decision making in situations where outcomes are partly random and partly under the control of a decision maker. This problem is however a Partially observable markov decision process, simply meaning our agent has access to limited game information (e.g not knowing the current cards our opponent has as also in poker).
+            <span class="image fit">
+                <img src="../images/rl_loop.jpeg" alt="" />
+                <p>Reinforcement learning loop</p>
+            </span>
+            <h3>Algorithms</h3>
+            There are several algorithms in reinforcement learning. This problem requires a function approximator (estimating future rewards) so the algorithms used will fall under Deep Reinforcement Learning. Papers of focus:
+            <ul>
+                <li>Deep Q Networks (DQN). In this paper the authors devise an algorithm capable of perfoming at superhuman levels at atari games while only receiving the screen pixels as input.</li>
+                <li>Deep Deterministic Policy Gradients (DDPG). In this paper the authors used the underlying success of the DQN algorithm to create another algorithm to help deal with continuous action spaces as opposed to the discretization that occurs in order to use DQN.</li>
+                <li>Parameterized Deep Q Network (P-DQN). In this paper the authors use the ideas of both DQN and DDPG to integrate them both into one. This algorithm handles two-step action selection where one action is discrete and the other is continuous.</li>
+                <li>World models. In this paper the authors use a generative neural network that can be trained quickly in an unsupervised manner to learn a compressed spatial and temporal representation of the environment.</li>
+            </ul>
+            Due to lack of direct access to game variables, the environment will simply be screen pixels from an android emulator, specifically BlueStacks. This means the training will have to occur in real-time. <br/>
+            Because of this limitation, I realized passing only the pixels to the agent would result in an extremely long training (that is if convergence is even possible). So i decided to engineer some features based on the game screen. These features will then be passed to the agent as opposed to just the pixels. The features come in two sets; one comes from a variational autoencoder and the other from me using computer vision techniques. More on this later.
+          </p>
+        </div>
+        <div id="methods">
+            <h2>Methodology</h2>
+            <p>
+                Taken from the "world models" paper, I implemented a Variational Autoencoder (VAE) to represent the environment in a temporal way. A variational autoencoder (VAE) provides a probabilistic manner for describing an observation in latent space. More specifically, the input data is converted into an encoding vector where each dimension represents some learned atrribute about the input. The "variational" part comes in where we formulate our encoder to describe a probability distribution for each latent attribute.
+                <span class="image fit">
+                    <img src="../images/vae.jpeg" alt="" />
+                    <p>Variational Autoencoder architecture</p>
+                </span>
+                The VAE is composed of two parts:
+                <ul>
+                    <li>Encoder - Takes input (image in this case) and converts into a n-dimension vector.</li>
+                    <li>Decoder - Takes the n-dimensional vector as input and tries to reconstruct original input.</li>
+                </ul>
+                <h3>Training the VAE</h3>
+                A variational autoencoder is trained in an unsupervised way, meaning no labels will be needed to train the model. <br/>
+                Before training, I need to collect images from the environment. So after implementation of a random agent to interact with the environment, I collected 500K images all of which to be used to train the VAE. These images were then uploaded to an s3 bucket to be used with the AWS SageMaker. <br/>
+                The VAE used here follows similar architecture as described in the paper with slight changes. After hyperparameter tuning, the game images were best reconstructed using a 64-dimension encoder.
+                <h4>Loss functions:</h4>
+                <ul>
+                    <li>Kullback-Leibler divergence: a measure of how a probability distribution differs from another. Our goal here is to minimize this distance. (For the encoder)</li>
+                    <li>Correlation loss (r loss): mean squared difference between the true image and generated image. (For the decoder)</li>
+                </ul>
+                <pre>
+                    <code>
+def compile(self, learning_rate, r_loss_factor):
+    self.learning_rate = learning_rate
+
+    ### COMPILATION
+    def vae_r_loss(y_true, y_pred):
+        r_loss = K.mean(K.square(y_true - y_pred), axis = [1,2,3])
+        return r_loss_factor * r_loss
+
+    def vae_kl_loss(y_true, y_pred):
+        kl_loss =  -0.5 * K.sum(1 + self.log_var - K.square(self.mu) - K.exp(self.log_var), axis = 1)
+        return kl_loss
+
+    def vae_loss(y_true, y_pred):
+        r_loss = vae_r_loss(y_true, y_pred)
+        kl_loss = vae_kl_loss(y_true, y_pred)
+        return  r_loss + kl_loss
+                    </code>
+                </pre>
+                Model was trained using the Adam optimizer for 4 hours and the weights were downloaded from sagemaker to my local machine for testing. <br/><br/>
+                I began experimenting with the learned features of the VAE. I was impressed with results as the model was able to modify time on the image, the health of towers, the number of towers, the arena being played in, etc. One important thing the model could not learn was the position of the troops and understandably so due to the relative size of the troops, however I noticed dark shadows where troops ought to be so i still went on with the model. <br/><br/>
+                <h3>Features Engineering</h3>
+                While i would love to depend on the features gotten from the VAE, I went on to craft some features that turned out to be beneficial to the agent. These features were broadly grouped into two:
+                <ul>
+                    <li>Hand features: these are features that are gotten based on the 4 current cards the agent holds. Every card's stat is stored in a lookup table (Pandas). examples; card type, damage per second, hitpoints, speed, etc.</li>
+                    <li>Game features: these are features that are gotten from the game. examples; current time, x2 elixir (Boolean), XY position of troops on the board, number of towers.</li>
+                </ul>
+                The card stats were scraped from the web, then stored in a json file to be loaded during the main training session.
+                <pre>
+                    <code>
+class ClashScraper:
+    
+    def __init__(self, cards_filename: str):
+        self.cards = self.get_card_names(cards_filename)
+        self.web_host = "https://statsroyale.com/card/"
+        
+    @staticmethod    
+    def get_card_names(json_file: str) -> list[str]:
+        all_cards = []
+        with open(json_file, 'r') as j:
+            contents = json.loads(j.read())
+
+        for card in contents['items']:
+            all_cards.append(card['name'])
+
+        return all_cards
+    
+    def set_index(self, card: str, df: pd.DataFrame) -> pd.DataFrame:
+        card_col= pd.Series([card]* df.shape[0])
+        df["name"] = card_col
+        df.set_index("name", inplace=True)
+        return df
+        
+    def get_card_stats(self, card: str) -> None:
+        response = requests.get(self.web_host+card.replace(" ", "+"))
+        data = pd.read_html(response.text)[0]
+        self.set_index(card, data)
+        data.to_csv(f'card_info/all_stats/{card}/{card}.csv')
+        
+    def run(self):
+        found = 0
+        error = 0
+        
+        for card in self.cards:
+            try:
+                self.get_card_stats(card)
+                print('finished', card)
+                found += 1
+            except Exception as e:
+                print('could not find table for spell', card)
+                error += 1
+            
+        print('done')
+        print(f'found {found} cards and could not find tables for {error} cards')
+                    </code>
+                </pre>
+                Various methods were used to extract these features such as template matching using OpenCV (for current hand identification, troop locations, total number of towers, etc.) and optical character recognition using EasyOCR (for tower health reading, time, and total number of elixir).
+                <pre>
+                    <code>
+class Features:
+    
+    def __init__(self):
+        self.scaler = StandardScaler()
+        self.card_id = {"giant": cv2.imread("assets/giant_id.png",0),
+                        "fireball": cv2.imread("assets/fireball_id.png",0),
+                        "arrows": cv2.imread("assets/arrows_id.png",0),
+                        "goblins": cv2.imread("assets/goblins_id.png",0),
+                        "knight": cv2.imread("assets/knight_id.png",0),
+                        "minions": cv2.imread("assets/minions_id.png",0),
+                        "prince": cv2.imread("assets/prince_id.png",0),
+                        "archers": cv2.imread("assets/archers_id.png",0),}
+
+        deck_stats = pd.read_csv("card_info/cards.txt", index_col="name")
+        self.deck_stats = pd.get_dummies(deck_stats)
+        self.card_stats = ClashDataLoader().load_data()
+        self.tower_stats = pd.read_csv("card_info/towers.txt", index_col="type")
+        self.grayscale = lambda x: cv2.cvtColor(x, cv2.COLOR_BGRA2GRAY)
+        
+    def get_curr_hand(self, img):
+        curr_hand = []
+        img = self.grayscale(img)
+        for card, template in self.card_id.items():
+            res = cv2.matchTemplate(img,template,cv2.TM_CCOEFF_NORMED)
+            threshold = 0.8
+            loc = np.where( res >= threshold)
+            if len(loc[0]) == 0: ...
+            else: 
+                curr_hand.append(card)
+                
+        return curr_hand
+    
+    def get_card_features(self, img, params):
+        
+        time = params['time']
+        elixir = params['elixir']
+        enemy_positions = params['enemy_positions']
+        #Filling up max_enemies array
+        max_enemies = np.zeros((30, 2)) #able to recognize a maximum of 30 enemies troops
+        if len(enemy_positions) > 0:
+            for i in range(len(enemy_positions)):
+                if i == 30:
+                    break
+                max_enemies[i] = enemy_positions[i]
+        max_enemies = self.scaler.fit_transform(max_enemies).flatten()
+        #
+        tower_feats = self.tower_stats.values
+        tower_feats = self.scaler.fit_transform(tower_feats).flatten()
+        #
+        card_feats = np.zeros((4, 24))
+        cards = self.get_curr_hand(img)
+        print(cards)
+        for i,card in enumerate(cards):
+            card_feats[i] = self.deck_stats.loc[card].values
+
+        card_feats = self.scaler.fit_transform(card_feats).flatten()
+        #
+        all_feats = np.concatenate((card_feats, tower_feats, max_enemies))
+        return all_feats
+                    </code>
+                </pre>
+                <h3>RL Components</h3>
+                <h4>Environment</h4>
+                Since the game is not made by me nor do i have access to in-game variables, this brings up a problem where we would need to train our agent in real-time. This is the reason we would be learning off game pixels. Another problem that arises is that the game is only available on mobile phone. However this is easily solved since the game can be run on any operating system if there exists an andriod emulator to simulate the mobile experience. This adds more computational load to be aware off, this affects future decisions like size of our experience replay and how often we train. Bluestacks was the emulator of choice, ran on windows os.
+                <h4>State</h4>
+                The state space for this problem would be a concatenation of the learned features from the VAE and the engineered features.
+                <h4>Action</h4>
+                The actions the agent can take for this problem can be formulated as a two-step selection.
+                <ul>
+                    <li>Continuous action: The agent chooses where on the board to place a card. This is generated as two values that take the range from 0 to 1. The first value indicates how far up we want to place the card and the second value refers to how far right we went to place a card.</li>
+                    <li>Discrete action: The agent then chooses which card would give it the most reward played at pre-selected position.</li>
+                </ul>
+                <h4>Reward</h4>
+                The agent's current performance is computed as a sum of three individual reward functions. The agent's reward system is based on how it is doing <strong>troop-wise</strong>, <strong>card-wise</strong> and <strong>tower-wise</strong>.<br/>
+                <strong>Troop-wise</strong>: 
+                Here, the agent is rewarded based on how many troops it has been able to eliminate from the previous state.
+                <pre>
+                    <code>
+def troop_reward(params: Dict[str, Any], past_params: Dict[str, Any]):
+    reward = 0
+    enemy_positions = params['enemy_positions']
+    n_enemies = len(enemy_positions)
+    past_n_enemies = len(past_params['enemy_positions'])
+    if n_enemies < past_n_enemies:
+        reward  = 5
+    elif n_enemies == past_n_enemies:
+        reward = -10
+            
+    return reward
+                    </code>
+                </pre>
+                <strong>Card-wise</strong>: 
+                Here, the agent is rewarded based on the position it places its cards. The main aim of this reward function is for agent to learn how to drop cards in the middle of the arena especially for distraction.
+                <pre>
+                    <code>
+def card_reward(params: Dict[str, Any], past_params: Dict[str, Any]):
+    reward = 0
+    past_action = past_params['action']
+    action = params['action']
+    if action[0] != 0 and past_action[0] != 0:
+        midXY = np.array((230, 400))
+        currXY = np.array(action[1])
+        distance = np.linalg.norm(currXY - midXY)
+        reward = -0.2 * distance
+            
+    return reward
+                    </code>
+                </pre>
+                <strong>Tower-wise</strong>: 
+                Here, the agent recieves a positive reward for taking a tower and a negative one for losing a tower.
+                <pre>
+                    <code>
+def tower_reward(self, params, past_params):
+    reward = 0
+    friend_tower, enemy_tower = params['tower_count']
+    past_friend_tower, past_enemy_tower = past_params['tower_count']
+    if past_friend_tower > friend_tower:
+        reward = -30
+            
+    if past_enemy_tower > enemy_tower:
+        reward = 20
+            
+    return reward
+                    </code>
+                </pre>
+                <h3>Algorithm (P-DQN)</h3>
+                Due to the formulation of the action space, I need an algorithm capable of handling both discrete and continuous action spaces, that is where the Parameterized Deep Q Networks come in. To understand how PDQN works we need to understand how DQN and DDPG works.<br/><br/>
+                Firstly, Deep Q Network (DQN) is an algorithm developed by Deepmind that achieved superhuman level performance in atari games while only having access to just the screen pixels, just like humans. It uses a neural network to approximate the action-value function Q, the maximum expected return achievable from following any given policy, and uses the Bellman equation as an iterative update until it converges to the optimal state-value function. Each iteration is stored in a buffer called experience replay, it contains the state, action, reward, next state and a done flag (boolean indicating if the episode is over or not). Given the nature of the algorithm, it is only capable of handling discrete action spaces (e.g left, right, up down).<br/><br/>
+                The Double Deep Deterministic Gradient (DDPG) is an algorithm which concurrently learns a Q-function and a policy. This approach is closely connected to Q-learning, and is motivated the same way. It uses off-policy data and the Bellman equation to learn the Q-function, and uses the Q-function to learn the policy.<br/>
+                In the P-DQN algorithm, the ideas from DQN and DDPG are incorporated into one. There will be an "actor" network which determines our continuous action parameters then a "critic" network which outputs the expected returns from the given returns. The two networks both have target networks. <br/>
+                <span class="image fit pdqn">
+                    <img src="../images/pdqn.png" alt=""/>
+                    <p>PDQN Algorithm</p>
+                </span>
+                 <br/>
+                <strong>Prioritized Experience Replay</strong>: DQN samples uniformly from the replay buffer. Ideally, we want to sample more frequently those transitions from which there is much to learn. As a proxy for learning potential, prioritized experience replay samples transitions with probability relative to the most recent encountered absolute TD error. Temporal Difference (T.D) can be calculated with this formula:
+                <span class="image fit td">
+                    <img src="../images/td.png" alt="" />
+                    <p>TD error</p>
+                </span>
+                where r, s and s' are the reward, state and next state respectively with gamma being the discount rate.<br/>
+                <strong>Epsilon Greedy Algorithm</strong>: This is an algorithm used to solve the exploration vs exploitation problem. This problem occurs when the agent always pick the "optimal" action according to the state-value estimate but this action may not be the most optimal action in the long run. To solve this, we choose a value and uniformly sample, if the sampled value is less than our chosen value we take a random action otherwise we exploit our "best" known action. In this project the epsilon greedy algorithm will be used to either place a card on the board or we save our elixir. This is because not all actions are available at any given state, so to explore in this case, we want the agent to wait for more actions to become available. Due to the inner workings of the DDPG algorithm an Ornstein-Uhlenbeck noise has already been applied to the continuous action space (where the agent places the card).
+            </p>
+        </div>
+
+        <div id="diagrams">
+            <h2>System Diagrams</h2>
+            <h3>Detailed Model System</h3>
+            <p>
+                <span class="image detailed">
+                    <img src="../images/clash_detailed_model.png" alt="" />
+                </span>
+            </p>
+            <h3>High level system overview</h3>
+            <p>
+                <span class="image high">
+                    <img src="../images/clashroyaleoverview.png" alt="" />
+                </span>
+            </p>
+        </div>
+
+        <div id="train">
+            <h2>Training</h2>
+            <p>
+                Using the P-DQN algorithm and the figures above as references, our training cycle looks like this:
+                <ul>
+                    <li>Collect the current state from the environment.</li>
+                    <li>Extract features from the state using feature engineering.</li>
+                    <li>Extract another set of features from the pre-trained VAE.</li>
+                    <li>Concatenate both features and pass it to the parameter model which outputs continuous values for each valid discrete action. Using the concatenated features and continuous values, pass the concatenation of both to the DQN model which outputs "how good" each continuous value is with respect to its discrete value</li>
+                    <li>Use the action on the environment and observe three values; the reward of that action, the next state after that action and a terminal flag indicating if that action led to the end of the game/session/episode.</li>
+                    <li>Calculate the absolute T.D error and update the buffer with the state, action, reward, next state, terminal flag and T.D error.</li>
+                    <li>Every n episodes, we define our target values (from the target networks) using the Bellman equation, perform stochastic gradient decent and the perform a soft update of the networks weights. For this use case, n refers to the number of episodes as opposed to steps, It takes on a value of 1 and gradually increases as our agent improves. Simply put, we train more frequently at the start and gradually decrease as time goes on.</li>
+                </ul>
+
+                Due to amount of computational power and time needed to execute this task from running a gpu intensive emulator to the large RAM needed for our replay buffer, the whole system was trained on the cloud. Specifically, I made use of Google Compute Engine to set up an Ubuntu virtual machine to handle the training.<br/><br/>
+                The agent was left to train for - days until it was finally stopped after little/no increase to our average rewards with time.
+            </p>
+        </div>
+
+        <div id="eval">
+            <h2>Evaluation</h2>
+            <p>
+                The agent was evaluated against 4 other agents:
+                <ul>
+                    <li>Randomized agent: carries out random action.</li>
+                    <li>Game Trainer agent: An agent provided by the game with intent to train new players.</li>
+                    <li>Human agent (me)</li>
+                    <li>Human agent (random online opponent)</li>
+                </ul>
+            </p>
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Opponent</th>
+                            <th>Win rate</th>
+                            <th>Avg. game time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Random Agent</td>
+                            <td>100%</td>
+                            <td>72 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Game Trainer</td>
+                            <td>80%.</td>
+                            <td>135 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Online Player</td>
+                            <td>60%</td>
+                            <td>80 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Against me</td>
+                            <td>0%</td>
+                            <td>48 seconds</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="references">
+            <h2>References</h2>
+            <ul>
+                <li>Deep Q-Networks.</li>
+                <li>Prioritized Experience Replay</li>
+                <li>World models.</li>
+                <li>Deep Deterministic Policy Gradients.</li>
+                <li>Parameterized Deep Q-Networks.</li>
+                <li>Rainbow: Combining Improvements In Deep Reinforcement Learning.</li>
+            </ul>
+        </div>
+  </div>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+#methods .image.il img{
+    width: 100%;
+}
+
+#methods .image.sl img{
+    width: 100%;
+}
+
+#methods .image.rl img{
+    width: 100%;
+    height: 350px;
+}
+
+#methods .image.td img{
+    width: 80%;
+    height: 60%;
+}
+
+#methods .image.rlm img{
+    width: 100%;
+}

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Dog Breed Predictor</title>
+    <link rel="stylesheet" href="../assets/css/dog.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+  </head>
+  <body class="is-preload">
+    <div id="main">
+        <header>
+            <h1>Dog Breed</h1>
+            <p>Predicting the breed of a dog using a fine-tuned state-of-the-art Convolution Neural Network.</p>
+            <ul class="icons">
+                <li><a href="https://github.com/Chinedu-E/dog-breeds" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
+            </ul>
+        </header>
+        <div id="introduction">
+            <h2>Introduction</h2>
+            <p>In this project, I built an end to end machine learning application that predicts the breed of a dog using a convolutional neural network.</p>
+            <p>
+                <span class="image conv">
+                    <img src="../images/convolutional.jpeg" alt="" />
+                </span>
+                <h3>The Dataset</h3>
+                The images used to train the model was sourced from the stanford website consisting of 20580 images, about 150 per breed and a total 120 breeds.
+            </p>
+        </div>
+
+        <div id="model">
+            <h2>Model</h2>
+            <p>
+                Keras provides alot of state-of-the-art models for anyone to use which leads to an issue, deciding which model to pick. Typically there is a trade-off between accuracy and inference time, so ultimately the decision lies on the use cases.<br/><br/>
+                In our case, I opted to use the Efficient Net model. This model came from the paper "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks" where the authors studied model scaling and identified that carefully balancing network depth, width, and resolution can lead to better performance. They used neural architecture search to design a new baseline network and scale it up to obtain a family of models, called EfficientNets, which achieve much better accuracy and efficiency than previous ConvNets.
+                <pre>
+                    <code>
+base_model = EfficientNetV2L(
+include_top=False,
+weights="imagenet",
+input_shape=(256, 256, 3))
+
+for layer in base_model.layers:
+    layer.trainable = False
+
+model = Sequential()
+model.add(Input(shape=(256,256,3)))
+model.add(data_augmentation)
+model.add(base_model)
+model.add(GlobalAveragePooling2D())
+model.add(Dropout(0.5))
+model.add(Dense(120,activation='softmax'))
+model.summary()
+Model: "sequential_1"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ efficientnetv2-l (Functiona  (None, 8, 8, 1280)       117746848 
+ l)                                                              
+                                                                 
+ global_average_pooling2d_2   (None, 1280)             0         
+ (GlobalAveragePooling2D)                                        
+                                                                 
+ dropout_2 (Dropout)         (None, 1280)              0         
+                                                                 
+ dense_2 (Dense)             (None, 120)               153720    
+                                                                 
+=================================================================
+Total params: 117,900,568
+Trainable params: 153,720
+Non-trainable params: 117,746,848
+_________________________________________________________________
+                    </code>
+                </pre>
+            </p>
+        </div>
+
+        <div id="train">
+            <h2>Training</h2>
+            <p>
+                The model was trained locally on a Macbook Pro M2 2022 with 16G RAM. I made use of the TensorFlow Data pipeline to avoid loading all images into the memory.
+                <pre>
+                    <code>
+ds_train, ds_test = tfds.load('stanford_dogs', split=['train', "test"],
+                  as_supervised=True, shuffle_files=True)
+
+def normalize_img(image, label):
+  image = tf.image.resize(image, size=(256, 256))
+  return image, label
+
+ds_train = ds_train.map(normalize_img)
+ds_train = ds_train.batch(128)
+ds_train = ds_train.prefetch(tf.data.AUTOTUNE)
+
+ds_test = ds_test.map(normalize_img)
+ds_test = ds_test.batch(128)
+ds_test = ds_test.prefetch(tf.data.AUTOTUNE)
+                    </code>
+                </pre>
+                Data augmentation was carried out using a Keras Sequential model:
+                <pre>
+                    <code>
+data_augmentation = Sequential([
+  preprocessing.RandomFlip("horizontal"),
+  preprocessing.RandomRotation(0.2),
+  preprocessing.RandomZoom(0.2),
+  preprocessing.RandomHeight(0.2),
+  preprocessing.RandomWidth(0.2),
+  # preprocessing.Rescaling(1./255) # keep for ResNet50V2, remove for EfficientNetB0
+], name ="data_augmentation")
+                    </code>
+                </pre>
+                Next was define all our callbacks to further minimize overfitting and wasting computational resources.
+                <pre>
+                    <code>
+checkpoint = ModelCheckpoint(
+    './base.model',
+    monitor='val_loss',
+    verbose=1,
+    save_best_only=True,
+    mode='min',
+    save_weights_only=False,
+    save_freq="epoch"
+)
+earlystop = EarlyStopping(
+    monitor='val_loss',
+    min_delta=0.001,
+    patience=10,
+    verbose=1,
+    restore_best_weights=True,
+    mode='auto'
+)
+reduce = ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.1,
+    patience=3,
+    verbose=1, 
+    mode='auto'
+)
+callbacks = [checkpoint, earlystop, reduce]
+                    </code>
+                </pre>
+                The model was trained for about 30 epochs (2 hours) before reaching a validation accuracy of 95%.
+            </p>
+        </div>
+
+        <div id="Deployment">
+            <h2>Deployment</h2>
+            <p>
+                After training, the model was saved and uploaded to a Google bucket, then the model was deployed as an endpoint using Vertex AI on Google Cloud Platform. Then to make predictions, we make a request to the model.
+                <pre>
+                    <code>
+def predict_custom_trained_model(
+    project: str,
+    endpoint_id: str,
+    instances,
+    location: str = "northamerica-northeast2",
+    api_endpoint: str = "northamerica-northeast2-aiplatform.googleapis.com",
+):
+    """
+    `instances` can be either single instance of type dict or a list
+    of instances.
+    """
+    # The AI Platform services require regional API endpoints.
+    client_options = {"api_endpoint": api_endpoint}
+   
+
+    # Initialize client that will be used to create and send requests.
+    client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
+    instances = instances.numpy().tolist()
+
+    instances = instances if type(instances) == list else [instances]
+    instances = [
+        json_format.ParseDict(instance_dict, Value()) for instance_dict in instances
+    ]
+    parameters_dict = {}
+    parameters = json_format.ParseDict(parameters_dict, Value())
+    endpoint = client.endpoint_path(
+        project=project, location=location, endpoint=endpoint_id
+    )
+    response = client.predict(
+        endpoint=endpoint, instances=instances, parameters=parameters
+    )
+    # The predictions are a google.protobuf.Value representation of the model's predictions.
+    predictions = response.predictions
+    return predictions
+                    </code>
+                </pre>
+            </p>
+        </div>
+
+        <div id="app">
+            <h2>Application</h2>
+            <p>
+                Streamlit was used for the UI of this project. Streamlit is an open source app framework in Python language. It helps us create web apps for data science and machine learning in a short time.<br/><br/>
+
+                Docker was used to containerize this application to be pushed to the Heroku platform.<br/>
+
+                Dockerfile:
+                <pre>
+                    <code>
+FROM python:3.9-slim
+
+EXPOSE $PORT
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Install pip requirements
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip
+RUN python -m pip install -r requirements.txt
+WORKDIR /main
+COPY . /main
+# During debugging, this entry point will be overridden.
+CMD streamlit run --server.port $PORT --server.enableCORS false main.py
+                    </code>
+                </pre>
+                <h3>C.I/C.D</h3>
+                Deployment was done continuously during development using github actions. I push to the Heroku platform on every code push to GitHub. <br/>
+                workflow yaml file:
+                <pre>
+                    <code>
+# Your workflow name.
+name: Deploy to heroku.
+
+# Run workflow on every push to main branch.
+on:
+  push:
+    branches: [main]
+
+# Your workflows jobs.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Check-out your repository.
+      - name: Checkout
+        uses: actions/checkout@v2
+
+
+### ⬇ IMPORTANT PART ⬇ ###
+
+      - name: Build, Push and Release a Docker container to Heroku. # Your custom step name
+        uses: gonuit/heroku-docker-deploy@v1.3.3 # GitHub action name (leave it as it is).
+        with:
+          # Below you must provide variables for your Heroku app.
+
+          # The email address associated with your Heroku account.
+          # If you don't want to use repository secrets (which is recommended) you can do:
+          # email: my.email@example.com
+          email: ${{ secrets.HEROKU_EMAIL }}
+          
+          # Heroku API key associated with provided user's email.
+          # Api Key is available under your Heroku account settings.
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+                    </code>
+                </pre>
+            </p>
+        </div>
+        <div id="gallery">
+            <h2>Gallery</h2>
+            <p>
+                <span class="image gallery">
+                    <img src="../images/german_shep.png" alt="" />
+                </span>
+                <span class="image gallery">
+                    <img src="../images/great_dane.png" alt="" />
+                </span>
+                <span class="image gallery">
+                    <img src="../images/groenendael.png" alt="" />
+                </span>
+            </p>
+        </div>
+  </div>
+  </body>
+</html>
